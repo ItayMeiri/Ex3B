@@ -17,6 +17,9 @@ namespace ariel {
         double convert_bigger;
     };
     class NumberWithUnits {
+        //1KM = 1000M
+        //1CM = 100MM
+        //1M = 100CM
     private:
 
     public:
@@ -29,19 +32,19 @@ namespace ariel {
         friend std::ostream& operator<< (std::ostream &out, const NumberWithUnits &num);
         friend std::istream& operator>>(std::istringstream &is,NumberWithUnits &num);
 
-        friend int operator+( NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend int operator-( NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend int operator-( NumberWithUnits &o1);
+        friend double operator+( NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend double operator-( NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend double operator-( NumberWithUnits &o1);
 
         friend bool operator<(const NumberWithUnits &o1, const NumberWithUnits &o2);
         friend bool operator<=(const NumberWithUnits &o1, const NumberWithUnits &o2);
         friend bool operator>(const NumberWithUnits &o1, const NumberWithUnits &o2);
         friend bool operator>=(const NumberWithUnits &o1, const NumberWithUnits &o2);
 
-        friend int operator*( int ot, const NumberWithUnits &other);
+        friend double operator*( int ot, const NumberWithUnits &other);
         friend bool operator==(const NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend int operator+=( NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend int operator-=( NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend double operator+=( NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend double operator-=( NumberWithUnits &o1, const NumberWithUnits &o2);
 
         NumberWithUnits& operator++();
         NumberWithUnits operator++(int);
@@ -50,6 +53,7 @@ namespace ariel {
 
 
     };
+
 
 }
 

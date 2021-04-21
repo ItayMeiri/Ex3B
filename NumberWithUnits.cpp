@@ -39,24 +39,29 @@ void NumberWithUnits::read_units(std::ifstream &units_file) {
     Unit *right = nullptr;
     if (units.find(sign_left) == units.end()) {
       // initialize left, insert into map
-      units.insert(std::make_pair(sign_left, *new Unit{sign_left}));
+      units.insert(std::make_pair(sign_left, Unit{sign_left}));
     }
     if (units.find(sign_right) == units.end()) {
       // initialize right, insert into map
-      units.insert(std::make_pair(sign_right, *new Unit{sign_right}));
+      units.insert(std::make_pair(sign_right, Unit{sign_right}));
     }
     right = &units.at(sign_right);
     left = &units.at(sign_left);
     if (conversion_rate_to > conversion_rate_from) {
+      // left->smaller_unit = std::shared_ptr<Unit>(right);
       left->smaller_unit = right;
       left->convert_smaller = conversion_rate_to;
 
+      // right->bigger_unit = std::shared_ptr<Unit>(left);
       right->bigger_unit = left;
       right->convert_bigger = conversion_rate_from;
 
+
     } else {
+      // left->bigger_unit = std::shared_ptr<Unit>(right);
       left->bigger_unit = right;
       left->convert_bigger = conversion_rate_to;
+      // right->smaller_unit = std::shared_ptr<Unit>(left);
       right->smaller_unit = left;
       right->convert_smaller = conversion_rate_from;
     }
@@ -87,7 +92,7 @@ double NumberWithUnits::validateConversion(std::string s1, std::string s2) {
       return smaller_conversion;
     }
   }
-  return 0; // throw error
+  return 0; // throw error, not implemented yet
 }
 // overload operators
 std::ostream &operator<<(std::ostream &os, const NumberWithUnits &other) {
@@ -111,12 +116,20 @@ std::istream &operator>>(std::istringstream &is, NumberWithUnits &num) {
 }
 
 std::string operator+(NumberWithUnits &o1, const NumberWithUnits &o2) {
+  std::cout<<"******" << std::endl;
+  std::cout<< "o1: " << o1 << " + " << o2 << std::endl;
   double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
+  std::cout << "conversion rate is: " << conversion << std::endl; 
+  std::cout<<"******" << std::endl;
+
+
   return std::to_string(o1.value + o2.value * conversion) + o1.number_sign;
 }
 
 std::string operator-(NumberWithUnits &o1, const NumberWithUnits &o2) {
+    std::cout<< "o1: " << o1 << " - " << o2 << std::endl;
   double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
+  std::cout << "conversion rate is: " << conversion << std::endl; 
   return std::to_string(o1.value - o2.value * conversion) + o1.number_sign;
 }
 std::string operator-(NumberWithUnits &o1) {
@@ -142,9 +155,8 @@ bool operator>=(NumberWithUnits &o1, const NumberWithUnits &o2) {
   double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
   return o1.value >= o2.value * conversion;
 }
-NumberWithUnits &operator*(double ot, NumberWithUnits &other) {
-  other.value *= ot;
-  return other;
+double operator*(double ot, NumberWithUnits &other) {
+  return other.value*ot;
 }
 
 bool operator==(const NumberWithUnits &o1, const NumberWithUnits &o2) {
@@ -162,5 +174,6 @@ std::string operator-=(NumberWithUnits &o1, const NumberWithUnits &o2) {
   double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
   return std::to_string(o1.value - o2.value * conversion) + o1.number_sign;
 }
+
 
 } // namespace ariel

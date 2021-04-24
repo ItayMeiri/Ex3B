@@ -25,12 +25,11 @@ int main() {
   NumberWithUnits b{300, "m"};  // 300 meters
   cout << (a+b) << endl;   // Prints "2.3[km]". Note: units are determined by first number (a).
   cout << (b-a) << endl;   // Prints "-1700[m]". Note: units are determined by first number (b).
-
+  cout << (b-a) - a << endl; // broken
   cout << boolalpha; // print booleans as strings from now on:
   cout << (a>b) << endl;  // Prints "true"
   cout << (a<=b) << endl;  // Prints "false"
   cout << (a==NumberWithUnits{2000, "m"}) << endl;  // Prints "true"
-
 
   istringstream sample_input{"700 [ kg ]"};
   sample_input >> a;

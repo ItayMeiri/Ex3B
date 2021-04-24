@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <unordered_map>
+#include <boost/graph/graph_traits.hpp>
 
 namespace ariel {
         struct Unit{
@@ -18,37 +19,42 @@ namespace ariel {
     };
     class NumberWithUnits {
     protected:
+
+    public:
         double value;
         std::string number_sign;
-    public:
-
         static std::unordered_map <std::string, Unit> units;
         NumberWithUnits(double value, std::string sign);
         static void read_units(std::ifstream &units_file);
 
-        double validateConversion(std::string s1, std::string s2);
+        static double validateConversion(const std::string& s1, const std::string& s2);
         friend std::ostream& operator<< (std::ostream &out, const NumberWithUnits &num);
         friend std::istream& operator>>(std::istringstream &is,NumberWithUnits &num);
 
-        friend std::string operator+( NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend std::string operator-( NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend std::string operator-( NumberWithUnits &o1);
+        friend NumberWithUnits operator+( const NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend NumberWithUnits operator+( const NumberWithUnits &o1);
 
-        friend bool operator<( NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend bool operator<=( NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend bool operator>( NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend bool operator>=( NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend NumberWithUnits operator-( const NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend NumberWithUnits operator-(const NumberWithUnits &o1);
 
-        friend double operator*(double ot, NumberWithUnits &other);
+        friend bool operator<( const NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend bool operator<=( const NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend bool operator>( const NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend bool operator>=( const NumberWithUnits &o1, const NumberWithUnits &o2);
+
+        friend NumberWithUnits operator*(double ot, const NumberWithUnits &other);
+        friend NumberWithUnits operator*(const NumberWithUnits &other, double ot);
+
         friend bool operator==( const NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend std::string operator+=( NumberWithUnits &o1, const NumberWithUnits &o2);
-        friend std::string operator-=( NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend bool operator!=( const NumberWithUnits &o1, const NumberWithUnits &o2);
+
+        friend NumberWithUnits operator+=( NumberWithUnits &o1, const NumberWithUnits &o2);
+        friend NumberWithUnits operator-=( NumberWithUnits &o1, const NumberWithUnits &o2);
 
         NumberWithUnits& operator++();
         NumberWithUnits operator++(int);
         NumberWithUnits& operator--();
         NumberWithUnits operator--(int);
-
     };
 
 

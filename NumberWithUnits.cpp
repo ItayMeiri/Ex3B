@@ -2,11 +2,16 @@
 // Created by ischelle on 05/04/2021.
 //
 #include "NumberWithUnits.hpp"
+#include <cmath>
 
 namespace ariel {
 std::unordered_map<std::string, Unit> NumberWithUnits::units;
 NumberWithUnits::NumberWithUnits(double value, std::string sign) {
-  this->number_sign = sign;
+  if(units.find(sign) == units.end())
+  {
+    throw std::invalid_argument("Constructor error");
+  }
+  this->number_sign = std::move(sign);
   this->value = value;
 }
 
@@ -18,7 +23,7 @@ void NumberWithUnits::read_units(std::ifstream &units_file) {
     // Remove all spaces from string
     line.erase(remove_if(line.begin(), line.end(), isspace), line.end());
     size_t left_sign_index = line.find_first_not_of("0123456789.");
-    size_t equals_sign_index = line.find("=");
+    size_t equals_sign_index = line.find('=');
     std::string sub_str = line.substr(equals_sign_index + 1,
                                       line.length() - (equals_sign_index + 1));
     size_t right_sign_index = sub_str.find_first_not_of("0123456789.");
@@ -68,37 +73,45 @@ void NumberWithUnits::read_units(std::ifstream &units_file) {
   }
 }
 
-double NumberWithUnits::validateConversion(std::string s1, std::string s2) {
-  if (s1.compare(s2) == 0) {
+// bool nearly_equal(double a1, double a2, double epsilon)
+// {
+//   if (a1 == 0 && a2 == 0)
+//     return true;
+
+//   return std::abs(a1 - a2) < epsilon * pow (2.0, static_cast<int> (std::log2(std::max(std::abs(a1), std::abs(a2)))));
+// }
+
+double NumberWithUnits::validateConversion(const std::string& s1, const std::string& s2) {
+  if (s1 == s2) {
     return 1.0;
   }
   Unit u1 = units.at(s1);
   Unit u2 = units.at(s1);
   double bigger_conversion = 1;
   double smaller_conversion = 1;
-  while (u1.bigger_unit) {
+  while (u1.bigger_unit != nullptr) {
     bigger_conversion *= u1.convert_bigger;
     u1 = units.at(u1.bigger_unit->sign);
 
-    if (u1.sign.compare(s2) == 0) {
+    if (u1.sign==s2) {
       return bigger_conversion;
     }
   }
-  while (u2.smaller_unit) {
+  while (u2.smaller_unit != nullptr) {
     smaller_conversion *= u2.convert_smaller;
     u2 = units.at(u2.smaller_unit->sign);
 
-    if (u2.sign.compare(s2) == 0) {
+    if (u2.sign==s2) {
       return smaller_conversion;
     }
   }
-  return 0; // throw error, not implemented yet
+  throw std::invalid_argument("Don't match");
 }
 // overload operators
-std::ostream &operator<<(std::ostream &os, const NumberWithUnits &other) {
-  return os << other.value << "[" + other.number_sign + "]";
+std::ostream &operator<<(std::ostream &out, const NumberWithUnits &num) {
+  return out << num.value << "[" + num.number_sign + "]";
 }
-std::istream &operator>>(std::istringstream &is, NumberWithUnits &num) {
+std::istream &operator>>(std::istringstream &is,NumberWithUnits &num) {
   std::string str = is.str();
   // removes spaces and brackets
   str.erase(
@@ -108,72 +121,106 @@ std::istream &operator>>(std::istringstream &is, NumberWithUnits &num) {
 
       str.end());
   size_t index_value = str.find_first_not_of("012345679.");
-
+  std::string sn = (str.substr(index_value, str.length() - 1));
   num.value = (std::stod(str.substr(0, index_value)));
+  if(NumberWithUnits::units.find(sn) == NumberWithUnits::units.end())
+  {
+    throw std::invalid_argument("istream error");
+  }
 
   num.number_sign = (str.substr(index_value, str.length() - 1));
   return is;
 }
 
-std::string operator+(NumberWithUnits &o1, const NumberWithUnits &o2) {
-  std::cout<<"******" << std::endl;
-  std::cout<< "o1: " << o1 << " + " << o2 << std::endl;
-  double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
-  std::cout << "conversion rate is: " << conversion << std::endl; 
-  std::cout<<"******" << std::endl;
-
-
-  return std::to_string(o1.value + o2.value * conversion) + o1.number_sign;
+NumberWithUnits operator+(const NumberWithUnits &o1, const NumberWithUnits &o2) {
+  double conversion = NumberWithUnits::validateConversion(o2.number_sign, o1.number_sign);
+  return NumberWithUnits{o1.value + o2.value*conversion, o1.number_sign};
+}
+NumberWithUnits operator+(const NumberWithUnits &o1) {
+  return o1;
+}
+NumberWithUnits operator-(const NumberWithUnits &o1, const NumberWithUnits &o2) {
+  double conversion = NumberWithUnits::validateConversion(o2.number_sign, o1.number_sign);
+  return NumberWithUnits{o1.value - o2.value * conversion, o1.number_sign};
+}
+NumberWithUnits operator-(const NumberWithUnits &o1) {
+  return NumberWithUnits{(-1.0) * o1.value, o1.number_sign};
 }
 
-std::string operator-(NumberWithUnits &o1, const NumberWithUnits &o2) {
-    std::cout<< "o1: " << o1 << " - " << o2 << std::endl;
-  double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
-  std::cout << "conversion rate is: " << conversion << std::endl; 
-  return std::to_string(o1.value - o2.value * conversion) + o1.number_sign;
-}
-std::string operator-(NumberWithUnits &o1) {
-  return std::to_string((-1.0) * o1.value) + o1.number_sign;
+bool operator<(const NumberWithUnits &o1, const NumberWithUnits &o2) {
+  double conversion = NumberWithUnits::validateConversion(o2.number_sign, o1.number_sign);
+  if(o1 == o2) { return false;}
+  return o1.value < o2.value * conversion;}
+
+bool operator<=(const NumberWithUnits &o1, const NumberWithUnits &o2) {
+  double conversion = NumberWithUnits::validateConversion(o2.number_sign, o1.number_sign);
+  return o1 < o2 || o1 == o2;
 }
 
-bool operator<(NumberWithUnits &o1, const NumberWithUnits &o2) {
-  double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
-  return o1.value < o2.value * conversion;
-}
-
-bool operator<=(NumberWithUnits &o1, const NumberWithUnits &o2) {
-  double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
-  return o1.value <= o2.value * conversion;
-}
-
-bool operator>(NumberWithUnits &o1, const NumberWithUnits &o2) {
-  double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
+bool operator>(const NumberWithUnits &o1, const NumberWithUnits &o2) {
+  double conversion = NumberWithUnits::validateConversion(o2.number_sign, o1.number_sign);
+  if(o1 == o2) { return false;}
   return o1.value > o2.value * conversion;
 }
 
-bool operator>=(NumberWithUnits &o1, const NumberWithUnits &o2) {
-  double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
-  return o1.value >= o2.value * conversion;
+bool operator>=(const NumberWithUnits &o1, const NumberWithUnits &o2) {
+  double conversion = NumberWithUnits::validateConversion(o2.number_sign, o1.number_sign);
+  
+  return o1 > o2 || o1 == o2;
 }
-double operator*(double ot, NumberWithUnits &other) {
-  return other.value*ot;
+NumberWithUnits operator*(double ot, const NumberWithUnits &other) {
+  return NumberWithUnits{other.value*ot, other.number_sign};
 }
+NumberWithUnits operator*(const NumberWithUnits &other, double ot) {
+  return NumberWithUnits{other.value*ot, other.number_sign};
+}
+
 
 bool operator==(const NumberWithUnits &o1, const NumberWithUnits &o2) {
-  if (o1.number_sign.compare(o2.number_sign) == 1 && o1.value == o2.value) {
-    return true;
-  }
-  return false;
+  //check if they are straight up equal
+  double conversion = NumberWithUnits::validateConversion(o2.number_sign, o1.number_sign);
+  double a = o1.value;
+  double b = o2.value * conversion;
+  const double epsilon = 0.0001;
+  return std::abs(a-b) < epsilon;
 }
 
-std::string operator+=(NumberWithUnits &o1, const NumberWithUnits &o2) {
-  double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
-  return std::to_string(o1.value + o2.value * conversion) + o1.number_sign;
-}
-std::string operator-=(NumberWithUnits &o1, const NumberWithUnits &o2) {
-  double conversion = o1.validateConversion(o2.number_sign, o1.number_sign);
-  return std::to_string(o1.value - o2.value * conversion) + o1.number_sign;
+bool operator!=(const NumberWithUnits &o1, const NumberWithUnits &o2) {
+  return !(o1 == o2);
 }
 
+NumberWithUnits operator+=(NumberWithUnits &o1, const NumberWithUnits &o2) {
+  double conversion = NumberWithUnits::validateConversion(o2.number_sign, o1.number_sign);
+  o1.value += o2.value*conversion;
+  return o1;
+}
+NumberWithUnits operator-=(NumberWithUnits &o1, const NumberWithUnits &o2) {
+  double conversion = NumberWithUnits::validateConversion(o2.number_sign, o1.number_sign);
+  o1.value -= o2.value*conversion;
+  return o1;
+}
+NumberWithUnits& NumberWithUnits::operator++()
+{
+  value++;
+  return *this;
+}
 
+NumberWithUnits NumberWithUnits::operator++(int)
+{
+  NumberWithUnits temp = *this;
+  ++*this;
+  return temp;}
+
+NumberWithUnits& NumberWithUnits::operator--()
+{
+  value--;
+  return *this;
+}
+
+NumberWithUnits NumberWithUnits::operator--(int)
+{
+  NumberWithUnits temp = *this;
+  --*this;
+  return temp;
+}
 } // namespace ariel
